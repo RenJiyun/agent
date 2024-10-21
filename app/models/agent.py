@@ -3,7 +3,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
-from agent.utils.living_room import get_stream_data
+from utils.living_room import get_stream_data
 
 class Agent:
     def __init__(self, id, driver):
