@@ -1,3 +1,4 @@
+import socket
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -16,6 +17,8 @@ os.environ['HTTPS_PROXY'] = ''
 os.environ['NO_PROXY'] = '*'
 
 user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+chrome_user_data_dir = r"C:/Users/User/Desktop/selenium"
+chrome_debugger_port = 9527
 
 
 def timeout_handler(func):
@@ -43,7 +46,7 @@ def _remaining_time(start_time, total_timeout):
 
 
 @timeout_handler
-def _wait_for_page_load(driver, start_time, total_timeout, remaining_time):
+def _wait_for_page_load(driver, start_time=None, total_timeout=None, remaining_time=None):
     """
     Wait for the page to load, wait all the JavaScript to finish executing
 
@@ -56,6 +59,18 @@ def _wait_for_page_load(driver, start_time, total_timeout, remaining_time):
         lambda d: d.execute_script('return document.readyState') == 'complete'
     )
 
+def _start_chrome_debugger():
+    os.popen(f"start chrome.exe --remote-debugging-port={chrome_debugger_port} --user-data-dir={chrome_user_data_dir}")
+
+def _check_chrome_debugger_running():
+    """
+    Check if the chrome debugger is running by checking the debugger port
+    """ 
+    try:
+        socket.create_connection(("127.0.0.1", chrome_debugger_port), timeout=1)
+        return True
+    except socket.error:
+        return False
 
 def _get_chrome_driver():
     """
@@ -63,12 +78,13 @@ def _get_chrome_driver():
     """
     options = webdriver.ChromeOptions()
     options.add_argument(f"--user-agent={user_agent}")
+    options.add_experimental_option("debuggerAddress", "127.0.0.1:9527")
     driver = webdriver.Chrome(options=options)
     return driver
 
 
 @timeout_handler
-def _wait_for_login(driver, is_logged_in_func, start_time, total_timeout, remaining_time):
+def _wait_for_login(driver, is_logged_in_func, start_time=None, total_timeout=None, remaining_time=None):
     WebDriverWait(driver, remaining_time).until(is_logged_in_func)
 
 
@@ -96,14 +112,20 @@ class ZhihuService:
         try:
             driver = _drivers.get(username)
             if driver is not None:
-                return {"status": 0, "msg": "User already logged in"}
+                if _check_chrome_debugger_running():
+                    return {"status": 0, "msg": "User already logged in"}
+                else:
+                    driver.quit()
+                    _drivers.pop(username, None)
 
+            _start_chrome_debugger()
+            time.sleep(1)
             driver = _get_chrome_driver()
             _drivers[username] = driver
 
             driver.get(_zhihu_index_url)
-            _wait_for_page_load(driver, start_time, total_timeout)
-            _wait_for_login(driver, start_time, total_timeout, ZhihuService._is_logged_in)
+            _wait_for_page_load(driver, start_time=start_time, total_timeout=total_timeout)
+            _wait_for_login(driver, ZhihuService._is_logged_in, start_time=start_time, total_timeout=total_timeout)
         except Exception as e:
             _print_stack_trace()
             driver = _drivers.pop(username, None)
@@ -141,11 +163,14 @@ class ZhihuService:
     @staticmethod
     @timeout_entry_handler
     def get_user_info(username: str, timeout=10, start_time=None, total_timeout=None):
+        if not _check_chrome_debugger_running():
+            return {"status": 0, "msg": "Chrome debugger not running, try to login first"}
+        
         driver = _drivers.get(username)
         if driver is None:
             return {"status": 0, "msg": "User not logged in"}
         
         driver.get(_zhihu_profile_url.format(username))
-        _wait_for_page_load(driver, start_time, total_timeout)
+        _wait_for_page_load(driver, start_time=start_time, total_timeout=total_timeout)
         return {"status": 1, "msg": "success"}
         
