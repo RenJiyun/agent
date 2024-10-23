@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from app.services.agent_service import AgentService
 
-agent_routes = Blueprint('agent_routes', __name__, url_prefix="/douyin/agents/")
+agent_routes = Blueprint('agent_routes', __name__, url_prefix="/douyin/agents/deprecated")
 
 # 获取所有代理
 @agent_routes.route('list', methods=['GET'])
@@ -66,8 +66,3 @@ def like(agent_id):
     duration = request.json.get('duration')
     result = AgentService.like(agent_id, frequency, duration)
     return jsonify(result), 200
-
-
-@agent_routes.route('debug_1', )
-def debug_1():
-    pass
