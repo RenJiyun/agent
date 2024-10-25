@@ -117,6 +117,25 @@ class DouyinAgentService:
         return {"status": 0, "data": agent.to_dict()}
         
 
+
+    @staticmethod
+    def get_agent_info(agent_id):
+        agent = DouyinAgentService._agents[agent_id]
+        if agent is None:
+            return {"status": 1, "msg": "agent not found"}
+        return {"status": 0, "data": agent.to_dict()}
+
+
+    @staticmethod
+    def enter_live_room(agent_id, live_room_id, timeout):
+        pass
+
+
+    @staticmethod
+    def leave_live_room(agent_id):
+        pass
+
+
     _debug_driver = None
 
     @staticmethod

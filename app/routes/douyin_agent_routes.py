@@ -8,9 +8,36 @@ douyin_agent_routes = Blueprint('douyin_agent_routes', __name__, url_prefix="/do
 def create():
     return jsonify(DouyinAgentService.create()), 200
 
+@douyin_agent_routes.route('get_agent_info', methods=['GET'])
+def get_agent_info():
+    agent_id = request.json.get('agent_id')
+    return jsonify(DouyinAgentService.get_agent_info(agent_id)), 200
+
 @douyin_agent_routes.route('login', methods=['POST'])
 def login():
-    return jsonify(DouyinAgentService.login()), 200
+    agent_id = request.json.get('agent_id')
+    if agent_id is None:
+        raise ValueError("agent_id is required")
+    timeout = request.json.get('timeout', 120)
+    return jsonify(DouyinAgentService.login(agent_id, timeout)), 200
+
+@douyin_agent_routes.route('enter_live_room', methods=['POST'])
+def enter_live_room():
+    agent_id = request.json.get('agent_id')
+    if agent_id is None:
+        raise ValueError("agent_id is required")
+    live_room_id = request.json.get('live_room_id')
+    if live_room_id is None:
+        raise ValueError("live_room_id is required")
+    timeout = request.json.get('timeout', 120)
+    return jsonify(DouyinAgentService.enter_live_room(agent_id, live_room_id, timeout)), 200
+
+@douyin_agent_routes.route('leave_live_room', methods=['POST'])
+def leave_live_room():
+    agent_id = request.json.get('agent_id')
+    if agent_id is None:
+        raise ValueError("agent_id is required")
+    return jsonify(DouyinAgentService.leave_live_room(agent_id)), 200
 
 
 # 以下两个方法用来辅助调试获得登录状态
