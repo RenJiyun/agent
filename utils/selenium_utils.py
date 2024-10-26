@@ -31,11 +31,17 @@ def start_chrome_debugger(debugger_port):
     os.popen(f"start chrome.exe --remote-debugging-port={debugger_port} --user-data-dir={data_dir}", )
 
 
-def create_chrome_driver(debugger_port):
+def create_chrome_driver(debugger_port, debugger_address="127.0.0.1", chrome_driver_path=CHROME_DRIVER_PATH):
     options = webdriver.ChromeOptions()
     options.add_argument(f"--user-agent={USER_AGENT}")
-    options.add_experimental_option("debuggerAddress", f"127.0.0.1:{debugger_port}")
+    options.add_experimental_option("debuggerAddress", f"{debugger_address}:{debugger_port}")
 
-    service = Service(CHROME_DRIVER_PATH)
+    service = Service(chrome_driver_path)
     driver = webdriver.Chrome(options=options, service=service)
     return driver
+
+
+
+if __name__ == "__main__":
+    driver = create_chrome_driver(19527, debugger_address="192.168.3.207", chrome_driver_path="/home/ren/tools/chromedriver-linux64/chromedriver")
+    print(driver.page_source)
